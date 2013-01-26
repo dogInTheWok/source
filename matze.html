@@ -1,0 +1,39 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+	<title>My Page</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+	<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+	<script src="jquery_mobile.min.js"></script>
+</head> 
+<body> 
+
+<div data-role="page">
+
+	<div data-role="header">
+		<h1>Circle Wars</h1>
+	</div><!-- /header -->
+
+	<div data-role="content">	
+		<p></p>		
+<button onclick="drawingCircle()">Try it</button>
+<button onclick="erase()">Clear</button><br>
+<canvas height="500" width="720" id="cw" style="border:1px solid #000000;" onmousemove="draw(event)" onmouseout="cnvs_clearCoordinates(event)"></canvas>
+
+	</div><!-- /content -->
+</div><!-- /page -->
+<script src="flo.js"></script>
+<script>
+function drawingCircle()
+{
+	var c=document.getElementById("cw");
+	var ctx=c.getContext("2d");
+	ctx.beginPath();
+	ctx.arc(360,250,240,0,2*Math.PI);
+	ctx.stroke();
+}
+</script>
+</body>
+</html>
