@@ -1,4 +1,4 @@
-document.getElementById("myTitle").innerHTML="blub"
+document.getElementById("myTitle").innerHTML="blubv1"
 
 // canvas handles
 var c=document.getElementById("cw");
@@ -12,7 +12,7 @@ var MIN_DISTANCE_TO_START = 40;
 var XCENTER=360;
 var YCENTER=250;
 var RADIUS=240;
-var RADIUS_MARGIN = 8000;http://www.notebooksbilliger.de/notebooks/lenovo+notebooks/lenovo+business/thinkpad+l+serie
+var RADIUS_MARGIN = 8000;
 
 // global coordinates
 var lineValid=true;
@@ -29,8 +29,9 @@ var lineLength = new Array();
 lineLength[0]=0;
 
 /* Storage for the intersection points between the lines
- * 2*i	   = x coordinate
- * 2*i + 1 = y coordinate
+ * 3*i	   = x coordinate
+ * 3*i + 1 = y coordinate
+ * 3*i + 2 = index of intersection point
  */
 var intersectioner = new Array();
 var numInter = 0;
@@ -45,6 +46,18 @@ var endInter = new Array();
 ///Temporary storage for current line
 var currentLine = new Array();
 var currentIdent = 0;
+
+///Adjacency Matrix, i.e. storage for neighboring points
+var A = new Array(22);
+for(var i = 0; i < 22; ++i)
+{
+	A[i] = new Array(22);
+	for(var u = 0; u < 22; ++u)
+	{
+		A[i][u] = 0;
+	}
+}
+	
 
 ///Identifier for line segment
 var identLine = 0;
@@ -64,6 +77,44 @@ addEventListener("mouseup", function (e) {
 	delete keysDown[e.keyCode];
 	}, false);
 
+/////////Helper
+function printMatrix()
+{
+	var str = "";
+	for(var i = 0; i < 22; ++i)
+	{
+		for(var u = 0; u < 22; ++u)
+		{
+			str = str + A[i][u] + "   ";
+		}
+		str = str + "<br>";
+	}
+	document.getElementById("div0").innerHTML= str;
+}
+////////
+
+
+function cutLineInA(lineIndex, pointIndex)
+{
+	A[intersectioner[6 * lineIndex + 2]][intersectioner[6 * lineIndex+5]] = 0;
+	A[intersectioner[6 * lineIndex + 5]][intersectioner[6 * lineIndex+2]] = 0;
+	A[pointIndex][intersectioner[6 * lineIndex + 2]] = 1;
+	A[intersectioner[6 * lineIndex + 5]][pointIndex] = 1;
+	A[intersectioner[6 * lineIndex + 2]][pointIndex] = 1;
+	A[pointIndex][intersectioner[6 * lineIndex + 5]] = 1;
+}
+
+function findParentLine(index)
+{
+	var lineIndex = 0;
+	do
+	{
+		index = index - lineLength[lineIndex];
+		lineIndex++;
+	}
+	while(index > 0)
+	return --lineIndex;
+}
 
 function drawCircle()
 {
@@ -136,12 +187,21 @@ function finalizeLine()
 	identLine = identLine + currentIdent;
 	
 	/// - startInd, endInd
-	intersectioner[2 * numInter] = startInter[0];
-	intersectioner[2 * numInter + 1] = startInter[1];
+	intersectioner[3 * numInter] = startInter[0];
+	intersectioner[3 * numInter + 1] = startInter[1];
+	intersectioner[3 * numInter + 2] = numInter;
 	numInter++;
-	intersectioner[2 * numInter] = endInter[0];
-	intersectioner[2 * numInter + 1] = endInter[1];
+	intersectioner[3 * numInter] = endInter[0];
+	intersectioner[3 * numInter + 1] = endInter[1];
+	intersectioner[3 * numInter + 2] = numInter;
 	numInter++;
+	resetStorage();
+	endLine();
+	
+	///Write into Adjacency matrix
+	A[numInter - 2][numInter - 1] = 1;
+	A[numInter - 1][numInter - 2] = 1;
+	document.getElementById("div").innerHTML="done";
 }
 
 function resetStorage()
@@ -198,15 +258,15 @@ function draw(e)
 		resetStorage();
 		return;
 	}
-	
-	if (currentIdent<=lineLength[counterLines])
+	///Checks one initial condition of each line, i.e. if it starts on the circle itself 
+	if (currentIdent==0)
 	{
 		// check if line starts on circle
 		if ((rSqCur<RADIUS_MARGIN+RADIUS*RADIUS) && (rSqCur>RADIUS*RADIUS-RADIUS_MARGIN))
 		{
-			//document.getElementById("div").innerHTML="Start on cirlce arc"
-			startInter[0] = 4 * numInter; //cX;
-			startInter[1] = 4 * numInter + 1; //cY;
+			document.getElementById("div").innerHTML="Start on cirlce arc"
+			startInter[0] =cX;
+			startInter[1] =cY;
 			
 			///Store temporary coordinates for line here too
 			writeToTempStorage(cX, cY);
@@ -217,7 +277,6 @@ function draw(e)
 		{
 			lineValid=false;
 			//document.getElementById("div").innerHTML="RETURN 2"
-			return;
 		}
 	}
 	else
@@ -232,8 +291,6 @@ function draw(e)
 				writeToTempStorage(cX, cY);
 				
 				finalizeLine();
-				endLine();
-				resetStorage();
 			}
 			
 		}
@@ -244,18 +301,23 @@ function draw(e)
 		document.getElementById("div1").innerHTML="" + identLine;
 		document.getElementById("div2").innerHTML="" + currentIdent;
 		// check if line starts on another line
-		if (currentIdent<=lineLength[counterLines])
+		if (currentIdent == 0) //currentIdent<=lineLength[counterLines])
 		{
 			document.getElementById("div").innerHTML="start on another line"
 			if (cX<myLines[3*l]+TOLERANCE && cX>myLines[3*l]-TOLERANCE && cY<myLines[3*l+1]+TOLERANCE && cY>myLines[3*l+1]-TOLERANCE)
 			{
-				startInter[0] = 4 * numInter + 2; //cX;
-				startInter[1] = 4 * numInter + 3; //cY;
+				startInter[0] = myLines[3*l];
+				startInter[1] = myLines[3*l+1];
 				
 				//document.getElementById("div").innerHTML="Start on another line"
 								
 				///Store temporary coordinates for line here
 				writeToTempStorage(cX, cY);
+				
+				var lineIndex=findParentLine(l);
+				cutLineInA(lineIndex, numInter)
+				lineValid = true;
+				return;
 				
 			}
 			else
@@ -263,17 +325,19 @@ function draw(e)
 				lineValid=false;
 			}
 			//document.getElementById("div").innerHTML="RETURN 3"
-			return;
 		}
 		if (l<currentLine.length/3-10 && currentIdent>2 && (cX<currentLine[3*l]+TOLERANCE && cX>currentLine[3*l]-TOLERANCE && cY<currentLine[3*l+1]+TOLERANCE && cY>currentLine[3*l+1]-TOLERANCE))
 		{
-				endInter[0] = cX;
-				endInter[1] = cY;
+				endInter[0] = myLines[3*l];
+				endInter[1] = myLines[3*l+1];
 				
 				 ///Store temporary coordinates for line here
 			  	writeToTempStorage(cX, cY);
 
-				 ///Check if valid and finalize
+				 ///Valid and finalize
+				var lineIndex=findParentLine(l);
+				cutLineInA(lineIndex, numInter)
+				
 				eraseInvalid();
 				resetStorage();
 				endLine();
@@ -286,15 +350,13 @@ function draw(e)
 			if (cX<myLines[3*l]+TOLERANCE && cX>myLines[3*l]-TOLERANCE && cY<myLines[3*l+1]+TOLERANCE && cY>myLines[3*l+1]-TOLERANCE)
 			{
 				
-				endInter[0] = cX;
-				endInter[1] = cY;
+				endInter[0] = myLines[3*l];
+				endInter[1] = myLines[3*l+1];
 				 ///Store temporary coordinates for line here
 			  	writeToTempStorage(cX, cY);
 
 				 ///Check if valid and finalize
 				finalizeLine();
-				resetStorage();
-				endLine();
 				return;
 			}
 		}
