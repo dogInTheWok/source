@@ -7,14 +7,36 @@
 <body>
 	<h1>CIRCLE WARS</h1>
 <button onclick="drawCircle()">Try it</button>
+<button onclick="printML()">myLines</button>
+<button onclick="printIntersections()">intersections</button>
 <br>
 
 <canvas height="500" width="720" id="cw" style="border:1px solid #000000;" onmousemove="draw(event)">CANVAAAS</canvas>
 <div id="div">div</div>
+<div id="div1">div1</div>
+<div id="div2">div2</div>
 <script src="game.js"></script>
-<script src="matze.js"></script>
 <script>
-	drawCircle()
+	drawCircle();
+	
+	function printML()
+	{
+		var str="";
+		for (i=0;i<myLines.length/3;i++)
+		{
+			str=str+myLines[3*i]+" "+myLines[3*i+1]+" "+myLines[3*i+2]+"<br>";
+		}
+		document.getElementById("div2").innerHTML=str;
+	}
+	function printIntersections()
+	{
+		var str="";
+		for (i=0;i<intersectioner.length/2;i++)
+		{
+			str=str+intersectioner[2*i]+" "+intersectioner[2*i+1]+"<br>";
+		}
+		document.getElementById("div2").innerHTML=str;
+	}
 </script>
 </body>
 </html>
